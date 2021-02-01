@@ -112,7 +112,7 @@
       return row;
     }
 
-    var characters = ["w","a","i","t",".","s","o",".",".","."];
+    var characters = ["w","a","i","t"," ","s","o",".",".","."];
     var characterIndex = 0;
     function addItem() {
       console.log("creating new item", currentRow.childElementCount + 1);
@@ -129,18 +129,18 @@
       item.addEventListener("animationend", function() {
         item.classList.remove("fade-in");
       });
-      item.addEventListener("mouseenter", onMouseEnter, false);
+      //item.addEventListener("mouseenter", onMouseEnter, false);
       item.addEventListener("click", onClick, false);
       return item;
     }
 
-    function onClick(event) {
-      console.log("on click");
-      var backgroundColor = "background-color: hsl(" + rand(1, 360) + "," + rand(20, 80) + "%," + rand(40, 60) + "%);";
-      event.target.setAttribute("style", backgroundColor);
-    }
+    // function onClick(event) {
+    //   console.log("on click");
+    //   var backgroundColor = "background-color: hsl(" + rand(1, 360) + "," + rand(20, 80) + "%," + rand(40, 60) + "%);";
+    //   event.target.setAttribute("style", backgroundColor);
+    // }
 
-    function onMouseEnter(event) {
+    function onClick(event) {
       event.target.classList.add("flip");
       event.target.addEventListener("animationend", function() {
         event.target.classList.remove("flip");
@@ -171,7 +171,7 @@
       clearInterval(interval);
     }
 
-    start(500);
+    start(100);
   </script>
 </body>
 </html>
