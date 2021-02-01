@@ -148,6 +148,8 @@
     }
 
     function tick() {
+      // Only update when document has focus
+      if (!document.hasFocus()) return;
       var currentColumns = currentRow.childElementCount;
       console.log(maxColumns, currentColumns);
       if (maxColumns && currentRow.childElementCount == maxColumns) {
