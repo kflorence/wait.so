@@ -1,0 +1,175 @@
+<html>
+<head>
+  <title>Wait so</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      margin: 0;
+      background-color: black;
+    }
+    body {
+      color: white;
+      font-family: 'Roboto', sans-serif;
+      font-size: 2em;
+      word-wrap: break-word;
+      overflow: hidden;
+      user-select: none;
+    }
+    #container {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap-reverse;
+    }
+    .row {
+      animation: row 1s ease;
+      display: flex;
+      height: 4vw;
+    }
+    .row:nth-child(2n) {
+      direction: rtl;
+      flex-direction: row-reverse;
+      transform: scale(-1, 1);
+      width: 100%;
+    }
+    .item {
+      cursor: pointer;
+      height: 4vw;
+      width: 4vw;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .flip {
+      animation: flip 2s ease-in-out;
+    }
+    .fade-in {
+      animation: fade-in 2s ease-in-out;
+    }
+    @keyframes fade-in {
+      0% {
+        opacity: 0;
+      } 100% {
+        opacity: 1;
+      }
+    }
+    @keyframes flip {
+      0% {
+        transform: perspective(120px) rotateX(0deg) rotateY(0deg);
+      } 25% { 
+        transform: perspective(120px) rotateX(-180.1deg) rotateY(0deg);
+      } 50% { 
+        transform: perspective(120px) rotateX(-180deg) rotateY(-179.9deg);
+      } 75% { 
+        transform: perspective(120px) rotateX(-180.1deg) rotateY(0deg);
+      } 100% {
+        transform: perspective(120px) rotateX(0deg) rotateY(0deg);
+      }
+    }
+    @keyframes row {
+      0% {
+        height: 0;
+      }
+      100% {
+        height: 4vw;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="container"></div>
+  <script>
+    var container = document.getElementById("container");
+    var currentRow = addRow();
+    var currentItem;
+    var maxColumns;
+    var h = new Color(1, 360), s = new Color(20, 80), l = new Color(40, 60);
+
+    function rand(min, max) {
+      return min + Math.random() * (max - min);
+    }
+
+    function Color(min, max) {
+      this.add = 1;
+      this.current = rand(min, max);
+      this.min = min;
+      this.max = max;
+      this.next = function() {
+        var next = this.current + this.add;
+        if (next < this.min || next > this.max) {
+          // Go the other direction
+          this.add *= -1;
+        }
+        return this.current += this.add;
+      };
+    }
+
+    function addRow() {
+      console.log("creating new row", container.childElementCount + 1);
+      var row = document.createElement("div");
+      row.setAttribute("class", "row");
+      container.appendChild(row);
+      return row;
+    }
+
+    var characters = ["w","a","i","t",".","s","o",".",".","."];
+    var characterIndex = 0;
+    function addItem() {
+      console.log("creating new item", currentRow.childElementCount + 1);
+      var item = document.createElement("div");
+      item.classList.add("item", "fade-in");
+      var backgroundColor = "background-color: hsl(" + h.next() + "," + s.next() + "%," + l.next() + "%);";
+      item.setAttribute("style", backgroundColor);
+      item.innerText = characters[characterIndex];
+      characterIndex++;
+      if (characterIndex >= characters.length) {
+        characterIndex = 0;
+      }
+      currentRow.appendChild(item);
+      item.addEventListener("animationend", function() {
+        item.classList.remove("fade-in");
+      });
+      item.addEventListener("mouseenter", onMouseEnter, false);
+      item.addEventListener("click", onClick, false);
+      return item;
+    }
+
+    function onClick(event) {
+      console.log("on click");
+      var backgroundColor = "background-color: hsl(" + rand(1, 360) + "," + rand(20, 80) + "%," + rand(40, 60) + "%);";
+      event.target.setAttribute("style", backgroundColor);
+    }
+
+    function onMouseEnter(event) {
+      event.target.classList.add("flip");
+      event.target.addEventListener("animationend", function() {
+        event.target.classList.remove("flip");
+      });
+    }
+
+    function tick() {
+      var currentColumns = currentRow.childElementCount;
+      console.log(maxColumns, currentColumns);
+      if (maxColumns && currentRow.childElementCount == maxColumns) {
+        currentRow = addRow();
+      }
+      currentItem = addItem();
+      if (!maxColumns) {
+        maxColumns = Math.ceil(window.innerWidth / currentItem.offsetWidth);
+        console.log("set max columns", maxColumns);
+      }
+    }
+
+    var interval;
+    function start(ms) {
+      interval = setInterval(tick, ms);
+    }
+    
+    function stop() {
+      clearInterval(interval);
+    }
+
+    start(500);
+  </script>
+</body>
+</html>
