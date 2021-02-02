@@ -9,12 +9,13 @@
       background-color: black;
     }
     body {
-      color: white;
+      color: transparent;
       font-family: 'Roboto', sans-serif;
       font-size: 2em;
       word-wrap: break-word;
       overflow: hidden;
       user-select: none;
+      transition: background-color 2s ease-in-out;
     }
     #container {
       display: flex;
@@ -22,29 +23,39 @@
       flex-wrap: wrap-reverse;
     }
     .row {
-      animation: row 0.5s ease;
+      animation: new-row 1s ease;
       display: flex;
-      height: 4vw;
     }
     .row:nth-child(2n) {
       direction: rtl;
       flex-direction: row-reverse;
       transform: scale(-1, 1);
       width: 100%;
+      /* Fix 1px margin sometimes appearing in Mac/Chrome. */
+      margin-bottom: -1px;
     }
     .item {
       cursor: pointer;
-      height: 4vw;
-      width: 4vw;
+      height: 2vw;
+      width: 2vw;
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    .flip {
-      animation: flip 2s ease-in-out;
-    }
     .fade-in {
       animation: fade-in 1s ease-in-out;
+    }
+    .hover {
+      animation: hover 1s ease-in-out;
+    }
+    @keyframes hover {
+      0% {
+        color: transparent;
+      } 50% {
+        color: white;
+      } 100% {
+        color: transparent;
+      }
     }
     @keyframes fade-in {
       0% {
@@ -53,43 +64,21 @@
         opacity: 1;
       }
     }
-    @keyframes flip {
-      0% {
-        transform: perspective(120px) rotateX(0deg) rotateY(0deg);
-      } 25% { 
-        transform: perspective(120px) rotateX(-180.1deg) rotateY(0deg);
-      } 50% { 
-        transform: perspective(120px) rotateX(-180deg) rotateY(-179.9deg);
-      } 75% { 
-        transform: perspective(120px) rotateX(-180.1deg) rotateY(0deg);
-      } 100% {
-        transform: perspective(120px) rotateX(0deg) rotateY(0deg);
-      }
-    }
-    @keyframes row {
+    @keyframes new-row {
       0% {
         height: 0;
       }
       100% {
-        height: 4vw;
+        height: 2vw;
       }
     }
   </style>
-</head>
-<body>
-  <div id="container"></div>
   <script>
-    var container = document.getElementById("container");
-    var currentRow = addRow();
-    var currentItem;
-    var maxColumns;
-    var h = new Color(1, 360), s = new Color(20, 80), l = new Color(40, 60);
-
     function rand(min, max) {
       return min + Math.random() * (max - min);
     }
 
-    function Color(min, max) {
+    function Color(add, min, max) {
       this.add = 1;
       this.current = rand(min, max);
       this.min = min;
@@ -104,18 +93,42 @@
       };
     }
 
+    var
+      h = new Color(rand(1, 10), 1, 360), 
+      s = new Color(rand(1, 10), 20, 80),
+      l = new Color(rand(1, 10), 40, 60);
+
+    function updateBackgroundColor() {
+      // Use opposite side of color wheel.
+      var bodyH = h.current + 180;
+      if (bodyH >= 360) bodyH -= 360;
+      var backgroundColor = "background-color: hsl(" + bodyH + "," + s.current + "%," + l.current + "%);"
+      document.getElementsByTagName("body")[0].setAttribute("style", backgroundColor);
+    }
+  </script>
+</head>
+<body>
+  <div id="container"></div>
+  <script>
+    var loop;
+    var paused = false;
+    var container = document.getElementById("container");
+    var currentRow = addRow();
+    var currentItem;
+    var maxColumns;
+
     function addRow() {
       console.log("creating new row", container.childElementCount + 1);
       var row = document.createElement("div");
       row.setAttribute("class", "row");
       container.appendChild(row);
+      updateBackgroundColor();
       return row;
     }
 
-    var characters = ["w","a","i","t"," ","s","o",".",".","."];
+    var characters = ["w","a","i","t","s","o"];
     var characterIndex = 0;
     function addItem() {
-      console.log("creating new item", currentRow.childElementCount + 1);
       var item = document.createElement("div");
       item.classList.add("item", "fade-in");
       var backgroundColor = "background-color: hsl(" + h.next() + "," + s.next() + "%," + l.next() + "%);";
@@ -129,29 +142,30 @@
       item.addEventListener("animationend", function() {
         item.classList.remove("fade-in");
       });
-      //item.addEventListener("mouseenter", onMouseEnter, false);
-      item.addEventListener("click", onClick, false);
+      item.addEventListener("mouseenter", onMouseEnter, false);
       return item;
     }
 
-    // function onClick(event) {
-    //   console.log("on click");
-    //   var backgroundColor = "background-color: hsl(" + rand(1, 360) + "," + rand(20, 80) + "%," + rand(40, 60) + "%);";
-    //   event.target.setAttribute("style", backgroundColor);
-    // }
-
-    function onClick(event) {
-      event.target.classList.add("flip");
+    function onMouseEnter(event) {
+      event.target.classList.add("hover");
       event.target.addEventListener("animationend", function() {
-        event.target.classList.remove("flip");
+        event.target.classList.remove("hover");
       });
     }
 
+    function onKeyDown(event) {
+      if (event.defaultPrevented) return;
+      switch(event.code) {
+        case "Space":
+          paused = !paused;
+          break;
+      }
+      event.preventDefault();
+    }
+
     function tick() {
-      // Only update when document has focus
-      if (!document.hasFocus()) return;
+      if (paused) return;
       var currentColumns = currentRow.childElementCount;
-      console.log(maxColumns, currentColumns);
       if (maxColumns && currentRow.childElementCount == maxColumns) {
         currentRow = addRow();
       }
@@ -162,14 +176,15 @@
       }
     }
 
-    var interval;
     function start(ms) {
-      interval = setInterval(tick, ms);
+      loop = setInterval(tick, ms);
     }
     
     function stop() {
-      clearInterval(interval);
+      clearInterval(loop);
     }
+
+    window.addEventListener("keydown", onKeyDown, true);
 
     start(100);
   </script>
